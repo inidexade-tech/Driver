@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet & Voucher Hub - Deputi Pangan & Deputi Investigasi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                            900: '#064e3b',
+                        },
+                        ev: {
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            glow: 'rgba(56, 189, 248, 0.35)'
+                        },
+                        ice: {
+                            400: '#f59e0b',
+                            500: '#d97706',
+                            600: '#b45309',
+                            glow: 'rgba(245, 158, 11, 0.35)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080d1a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .vehicle-card-active {
+            border-color: rgba(56, 189, 248, 0.8) !important;
+            background: rgba(14, 165, 233, 0.12) !important;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.5);
+        }
+
+        /* Print Layout Rules for LPJ Export */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print, header, #loginScreen, button, .glass-panel, .glass-card {
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .glass-panel {
+                background: transparent !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                color: black !important;
+            }
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 8px !important;
+                color: black !important;
+            }
+        }
+        .print-only {
+            display: none;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col pb-12">
+
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl no-print">
+        <div class="glass-panel w-full max-w-xl rounded-3xl p-6 sm:p-10 border border-slate-700/80 shadow-2xl relative overflow-hidden text-center">
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 via-emerald-500 to-amber-500 mb-4 shadow-xl shadow-sky-500/20 text-slate-950 font-black text-2xl">
+                <i class="fa-solid fa-charging-station"></i>
+            </div>
+            
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
+                FLEET & VOUCHER HUB
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mb-8 max-w-md mx-auto">
+                Pengawasan Operasional Kendaraan Bensin & Mobil Listrik (Fortuner, Hyundai Ioniq 6, & Armada Lainnya).
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-6">
+                <!-- Deputi Pangan -->
+                <button onclick="loginAs('pangan')" class="glass-card hover:bg-sky-500/10 border-2 border-slate-700/60 hover:border-sky-400 rounded-2xl p-5 transition duration-200 group relative overflow-hidden">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition">
+                            <i class="fa-solid fa-wheat-awn"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-sky-400 font-mono font-bold">DEPUTI 01</p>
+                            <h3 class="text-base font-bold text-white group-hover:text-sky-300">Deputi Pangan</h3>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Multi Armada: Fortuner 2.4D & Hyundai Ioniq 6 EV</p>
+                    <div class="mt-3 text-xs text-sky-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition">
+                        Masuk Dashboard <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </div>
+                </button>
+
+                <!-- Deputi Investigasi -->
+                <button onclick="loginAs('investigasi')" class="glass-card hover:bg-amber-500/10 border-2 border-slate-700/60 hover:border-amber-400 rounded-2xl p-5 transition duration-200 group relative overflow-hidden">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-amber-400 font-mono font-bold">DEPUTI 02</p>
+                            <h3 class="text-base font-bold text-white group-hover:text-amber-300">Deputi Investigasi</h3>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Multi Armada: Fortuner VRZ & Operational EV</p>
+                    <div class="mt-3 text-xs text-amber-400 font-medium flex items-center gap-1 group-hover:translate-x-1 transition">
+                        Masuk Dashboard <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80 mb-6 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="brandIcon" class="w-11 h-11 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-sky-400 bg-clip-text text-transparent">
+                        FLEET & ENERGY TRACKER
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium hidden sm:block">Sistem Pengawasan Bensin & Charging EV Multi-Deputi</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="userBadge" class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl border bg-slate-900 text-xs font-semibold">
+                    <i id="userBadgeIcon" class="fa-solid fa-user-circle text-sm"></i>
+                    <div>
+                        <span id="userBadgeTitle" class="block font-bold text-white">Loading...</span>
+                        <span id="userBadgeSub" class="block text-[10px] text-slate-400 font-mono">Multi Armada</span>
+                    </div>
+                </div>
+
+                <!-- Export Report LPJ Button -->
+                <button onclick="exportLPJReport('csv')" class="hidden lg:flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                    <span>Ekspor Excel/LPJ</span>
+                </button>
+
+                <button onclick="openLogModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl transition duration-200 shadow-lg shadow-emerald-500/20 text-xs sm:text-sm">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                    <span>Catat Pengisian</span>
+                </button>
+
+                <button onclick="logout()" class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 hover:bg-rose-500/20 hover:border-rose-500/40 text-slate-300 hover:text-rose-400 transition" title="Ganti User / Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 w-full space-y-6">
+
+        <!-- Fleet Vehicle Selector Section -->
+        <section class="glass-panel rounded-3xl p-6 no-print">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-car-side text-sky-400"></i>
+                        Pilih Kendaraan Operasional
+                    </h2>
+                    <p class="text-xs text-slate-400">Pilih kendaraan untuk melihat dashboard voucher dan laporan khusus kendaraan tersebut</p>
+                </div>
+                <button onclick="openVehicleModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-sky-400 font-bold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Tambah Mobil Baru</span>
+                </button>
+            </div>
+
+            <!-- Vehicle Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="vehicleCardsGrid">
+                <!-- Dynamically generated vehicle cards -->
+            </div>
+        </section>
+
+        <!-- Voucher Status Banner for Active Vehicle -->
+        <section id="bannerPanel" class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden border no-print">
+            <div id="bannerGlow" class="absolute -right-10 -bottom-10 w-72 h-72 rounded-full blur-3xl pointer-events-none opacity-30"></div>
+
+            <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-6 relative z-10">
+                <div class="space-y-2">
+                    <div id="vehicleTypeBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
+                        <!-- Dynamic Badge -->
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight" id="activeVehicleTitle">
+                        Mobil Selected
+                    </h2>
+                    <p class="text-slate-400 text-sm max-w-xl" id="activeVehicleSubtitle">
+                        Jatah eksklusif 20 Voucher per bulan.
+                    </p>
+                </div>
+
+                <!-- Voucher Progress Card -->
+                <div class="glass-card p-5 rounded-2xl border border-slate-700/60 min-w-[280px] sm:min-w-[340px]">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs uppercase tracking-wider font-bold text-slate-400">Sisa Kuota Voucher Bulanan</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono" id="voucherPercentBadge">0% Sisa</span>
+                    </div>
+                    <div class="flex items-baseline gap-2 mb-3">
+                        <span class="text-4xl font-extrabold text-white font-mono" id="vouchersRemainingDisplay">0</span>
+                        <span class="text-slate-400 font-medium" id="totalAllocationDisplay">/ 20 Voucher</span>
+                        <span class="text-xs text-slate-400 font-mono ml-auto" id="energyRemainingDisplay">(0)</span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden p-0.5 border border-slate-800">
+                        <div id="voucherProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+
+                    <div class="mt-3 flex justify-between items-center text-xs text-slate-400">
+                        <span>Terpakai: <strong class="text-slate-200" id="vouchersUsedDisplay">0</strong> Voucher</span>
+                        <div class="flex gap-2">
+                            <button onclick="openExtraVoucherModal()" id="btnExtraVoucher" class="text-xs text-amber-400 hover:text-amber-300 font-semibold underline flex items-center gap-1">
+                                <i class="fa-solid fa-circle-plus"></i> Minta Kuota Ekstra
+                            </button>
+                            <button onclick="resetMonthlyQuota()" class="text-xs text-slate-400 hover:text-slate-200 underline font-medium">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i>Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Extra Voucher Approval Alert Banner (If pending) -->
+        <section id="extraQuotaBanner" class="hidden glass-panel rounded-2xl p-4 border border-amber-500/40 bg-amber-500/10 no-print">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">Pengajuan Voucher Ekstra (Over-Quota Request)</h4>
+                        <p class="text-xs text-slate-300" id="extraQuotaBannerText">Permintaan +5 Voucher tambahan sedang menunggu persetujuan Deputi.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="approveExtraQuota()" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-check mr-1"></i> Setujui (Approve)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 no-print">
+            <!-- Odometer -->
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xl">
+                    <i class="fa-solid fa-gauge-high"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Odometer Terakhir</p>
+                    <p class="text-2xl font-bold text-white font-mono mt-0.5" id="cardOdometer">0 <span class="text-xs font-normal text-slate-400">KM</span></p>
+                    <p class="text-[11px] text-slate-400 mt-1" id="cardDistanceTraveled">Total Jarak: +0 KM</p>
+                </div>
+            </div>
+
+            <!-- Energy / Fuel Total -->
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl" id="energyCardIcon">
+                    <i class="fa-solid fa-gas-pump"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider" id="energyCardTitle">Total Bensin</p>
+                    <p class="text-2xl font-bold text-white font-mono mt-0.5" id="cardTotalEnergy">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1" id="cardVoucherCount">Setara 0 Voucher</p>
+                </div>
+            </div>
+
+            <!-- Efficiency Metric -->
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Rata-Rata Efisiensi</p>
+                    <p class="text-2xl font-bold text-white font-mono mt-0.5" id="cardAvgEfficiency">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1" id="cardEfficiencyRating">Status Efisiensi</p>
+                </div>
+            </div>
+
+            <!-- Last Refuel / Charge -->
+            <div class="glass-panel p-5 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Pengisian Terakhir</p>
+                    <p class="text-lg font-bold text-white font-mono mt-0.5" id="cardLastDate">-</p>
+                    <p class="text-[11px] text-slate-400 mt-1 truncate max-w-[150px]" id="cardLastDriver">-</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+            <div class="glass-panel p-6 rounded-3xl lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg text-white">Grafik Konsumsi & Odometer</h3>
+                        <p class="text-xs text-slate-400">Data penggunaan energi/bensin vs kenaikan Odometer</p>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-mono border border-slate-700" id="chartVehicleTag">Active Vehicle</span>
+                </div>
+                <div class="h-64 sm:h-72 w-full">
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-panel p-6 rounded-3xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg text-white">Status Voucher</h3>
+                        <p class="text-xs text-slate-400">Jatah Voucher Bulanan & Ekstra</p>
+                    </div>
+                    <div class="h-52 w-full flex items-center justify-center relative">
+                        <canvas id="voucherPieChart"></canvas>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-800 space-y-2 text-xs">
+                    <div class="flex justify-between text-slate-300">
+                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Voucher Terpakai:</span>
+                        <span class="font-bold font-mono" id="pieUsedVal">0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-300">
+                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Voucher Tersedia:</span>
+                        <span class="font-bold font-mono" id="pieAvailVal">20</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Digital Voucher Grid -->
+        <section class="glass-panel rounded-3xl p-6 no-print">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-ticket text-emerald-400"></i>
+                        Lembar Digital Voucher Driver (<span id="voucherUnitText">1 Voucher = 10 Liter</span>)
+                    </h3>
+                    <p class="text-xs text-slate-400">Visualisasi kuota voucher bulanan untuk kendaraan aktif</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs">
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500"></span> Tersedia</div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-800 border border-slate-700 opacity-50"></span> Terpakai</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2.5" id="voucherGridContainer">
+                <!-- Voucher cards rendered dynamically -->
+            </div>
+        </section>
+
+        <section class="glass-panel rounded-3xl p-6 overflow-hidden">
+            <!-- Header for Print LPJ Document -->
+            <div class="print-only mb-6">
+                <h2 class="text-xl font-bold uppercase text-center text-black">LAPORAN PERTANGGUNGJAWABAN (LPJ) OPERASIONAL KENDARAAN</h2>
+                <p class="text-xs text-center text-black font-mono mb-4" id="printReportMeta">Unit Kerjasama Operational Fleet</p>
+                <hr class="border-black mb-4">
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 no-print">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-sky-400"></i>
+                        Riwayat Transaksi Pengisian
+                    </h3>
+                    <p class="text-xs text-slate-400">Laporan Odometer, Driver, dan Lokasi SPBU/SPKLU</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <button onclick="exportLPJReport('csv')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-emerald-400 font-bold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-csv"></i> Excel/CSV
+                    </button>
+                    <button onclick="window.print()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-sky-400 font-bold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-print"></i> Cetak PDF / LPJ
+                    </button>
+                    <div class="relative w-full sm:w-48">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="filterLogs()" placeholder="Cari Driver / SPBU..." class="w-full bg-slate-900/80 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[11px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">Tanggal</th>
+                            <th class="py-3 px-4">Driver</th>
+                            <th class="py-3 px-4">Odometer (Awal &rarr; Akhir)</th>
+                            <th class="py-3 px-4">Jarak</th>
+                            <th class="py-3 px-4">Voucher (Energi)</th>
+                            <th class="py-3 px-4">Efisiensi</th>
+                            <th class="py-3 px-4">Lokasi SPBU/SPKLU</th>
+                            <th class="py-3 px-4 text-center no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="divide-y divide-slate-800/60 text-xs">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="hidden text-center py-12">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-600 mb-2"></i>
+                <p class="text-slate-400 text-sm">Belum ada riwayat pengisian untuk kendaraan ini.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Log Entry Modal -->
+    <div id="logModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden no-print">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-2xl relative">
+            <button onclick="closeLogModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg" id="modalVehicleIcon">
+                    <i class="fa-solid fa-gas-pump"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Catat Pengisian Kendaraan</h3>
+                    <p class="text-xs text-slate-400" id="modalSubTitle">Fleet Entry Form</p>
+                </div>
+            </div>
+
+            <form id="fuelForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Tanggal Pengisian</label>
+                        <input type="date" id="inputDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Nama Driver / Pengemudi</label>
+                        <input type="text" id="inputDriver" placeholder="Nama Driver" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Odometer Sebelum Isi (KM)</label>
+                        <input type="number" id="inputOdoBefore" placeholder="Misal: 45200" required min="1" oninput="calculateTripDistance()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Odometer Saat Isi (KM)</label>
+                        <input type="number" id="inputOdoAfter" placeholder="Misal: 45420" required min="1" oninput="calculateTripDistance()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Jarak Tempuh Trip:</span>
+                    <span class="font-mono font-bold text-sky-400 text-sm" id="calcDistancePreview">0 KM</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Jumlah Voucher Digunakan</label>
+                        <select id="inputVouchers" onchange="updateLiterCalculation()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 font-mono">
+                            <option value="1">1 Voucher</option>
+                            <option value="2" selected>2 Voucher</option>
+                            <option value="3">3 Voucher</option>
+                            <option value="4">4 Voucher</option>
+                            <option value="5">5 Voucher</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1" id="energyLabel">Total Bensin Diterima</label>
+                        <div class="relative">
+                            <input type="number" id="inputEnergy" readonly class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-emerald-400 font-bold font-mono focus:outline-none">
+                            <span class="absolute right-3 top-2.5 text-xs text-slate-500" id="energyUnitSpan">Liter</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1" id="stationLabel">Nama SPBU / Lokasi Pengisian</label>
+                    <input type="text" id="inputStation" placeholder="Misal: SPBU Pertamina / SPKLU Ultra Fast Charging" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Catatan Tambahan (Opsional)</label>
+                    <input type="text" id="inputNotes" placeholder="Misal: Perjalanan Luar Kota / Charging Ultra Fast 150kW" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div class="pt-3 flex gap-3">
+                    <button type="button" onclick="closeLogModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-semibold text-sm hover:bg-slate-800 transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition">Simpan Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Extra Quota Request Modal -->
+    <div id="extraVoucherModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden no-print">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 border border-slate-700 shadow-2xl relative">
+            <button onclick="closeExtraVoucherModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-file-signature"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Pengajuan Voucher Ekstra</h3>
+                    <p class="text-xs text-slate-400">Permintaan Kuota Tambahan / Over-Quota</p>
+                </div>
+            </div>
+
+            <form id="extraQuotaForm" onsubmit="handleExtraQuotaSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Jumlah Voucher Ekstra Diminta</label>
+                    <select id="extraVoucherAmount" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500 font-mono">
+                        <option value="2">+2 Voucher (20 Liter / kWh)</option>
+                        <option value="5" selected>+5 Voucher (50 Liter / kWh)</option>
+                        <option value="10">+10 Voucher (100 Liter / kWh)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Alasan Penugasan Khusus / Luar Kota</label>
+                    <textarea id="extraQuotaReason" required rows="3" placeholder="Contoh: Tugas Pengawasan Khusus Luar Kota ke Cirebon & Semarang" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div class="pt-3 flex gap-3">
+                    <button type="button" onclick="closeExtraVoucherModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-semibold text-sm hover:bg-slate-800 transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition">Kirim Pengajuan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vehicle Creation Modal -->
+    <div id="vehicleModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden no-print">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 border border-slate-700 shadow-2xl relative">
+            <button onclick="closeVehicleModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Tambah Kendaraan Baru</h3>
+                    <p class="text-xs text-slate-400">Tambahkan Armada Bensin atau Listrik EV</p>
+                </div>
+            </div>
+
+            <form id="vehicleForm" onsubmit="handleVehicleSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nama Kendaraan</label>
+                    <input type="text" id="newVehName" placeholder="Misal: Hyundai Ioniq 6 / Fortuner VRZ" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nomor Plat Polisi</label>
+                    <input type="text" id="newVehPlate" placeholder="Misal: B 1003 DPG" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 font-mono">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Jenis Kendaraan</label>
+                        <select id="newVehType" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                            <option value="ICE">Bensin / Diesel (ICE)</option>
+                            <option value="EV">Listrik (EV)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Odometer Awal (KM)</label>
+                        <input type="number" id="newVehInitialOdo" placeholder="45000" required min="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex gap-3">
+                    <button type="button" onclick="closeVehicleModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-semibold text-sm hover:bg-slate-800 transition">Batal</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-bold text-sm shadow-lg transition">Tambah Mobil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_MONTHLY_VOUCHER_ALLOCATION = 20;
+
+        // User Data Structure & Profiles
+        const USER_PROFILES = {
+            pangan: {
+                key: 'fleet_data_pangan_v2',
+                title: 'Deputi Pangan',
+                sub: 'Armada Operasional Pangan',
+                defaultDriver: 'Pak Herman (Driver Pangan)',
+                defaultVehicles: [
+                    {
+                        id: 'v_pangan_1',
+                        name: 'Toyota Fortuner 2.4D',
+                        plate: 'B 1001 DPG',
+                        type: 'ICE', 
+                        unit: 'Liter',
+                        unitRate: 10, 
+                        initialOdo: 45000,
+                        extraVouchers: 0,
+                        pendingExtra: null,
+                        icon: 'fa-car-side',
+                        logs: [
+                            { id: 101, date: '2026-09-01', driver: 'Pak Herman', odoBefore: 45000, odoAfter: 45220, vouchers: 2, energy: 20, station: 'Pertamina Rest Area KM 19', notes: 'Inspeksi Gudang Bulog' },
+                            { id: 102, date: '2026-09-08', driver: 'Pak Herman', odoBefore: 45220, odoAfter: 45450, vouchers: 2, energy: 20, station: 'Pertamina MT Haryono', notes: 'Perjalanan Dinas Bogor' }
+                        ]
+                    },
+                    {
+                        id: 'v_pangan_2',
+                        name: 'Hyundai Ioniq 6 EV',
+                        plate: 'B 1008 DPG',
+                        type: 'EV',
+                        unit: 'kWh',
+                        unitRate: 10, 
+                        initialOdo: 12000,
+                        extraVouchers: 0,
+                        pendingExtra: null,
+                        icon: 'fa-bolt',
+                        logs: [
+                            { id: 103, date: '2026-09-03', driver: 'Pak Budi', odoBefore: 12000, odoAfter: 12140, vouchers: 2, energy: 20, station: 'SPKLU Ultra Fast Charging Kuningan', notes: 'Kunjungan Lapangan Listrik Eco' },
+                            { id: 104, date: '2026-09-12', driver: 'Pak Budi', odoBefore: 12140, odoAfter: 12320, vouchers: 3, energy: 30, station: 'SPKLU Rest Area KM 57', notes: 'Charging Baterai 80%' }
+                        ]
+                    }
+                ]
+            },
+            investigasi: {
+                key: 'fleet_data_investigasi_v2',
+                title: 'Deputi Investigasi',
+                sub: 'Armada Operasional Investigasi',
+                defaultDriver: 'Pak Bambang (Driver Investigasi)',
+                defaultVehicles: [
+                    {
+                        id: 'v_inv_1',
+                        name: 'Toyota Fortuner VRZ',
+                        plate: 'B 1002 DIG',
+                        type: 'ICE',
+                        unit: 'Liter',
+                        unitRate: 10,
+                        initialOdo: 62000,
+                        extraVouchers: 0,
+                        pendingExtra: null,
+                        icon: 'fa-car-side',
+                        logs: [
+                            { id: 201, date: '2026-09-02', driver: 'Pak Bambang', odoBefore: 62000, odoAfter: 62240, vouchers: 2, energy: 20, station: 'Pertamina TB Simatupang', notes: 'Giat Investigasi Lapangan' },
+                            { id: 202, date: '2026-09-10', driver: 'Pak Bambang', odoBefore: 62240, odoAfter: 62580, vouchers: 3, energy: 30, station: 'Pertamina Rest Area KM 57', notes: 'Tugas Cikampek' }
+                        ]
+                    },
+                    {
+                        id: 'v_inv_2',
+                        name: 'Hyundai Ioniq 6 EV',
+                        plate: 'B 1009 DIG',
+                        type: 'EV',
+                        unit: 'kWh',
+                        unitRate: 10,
+                        initialOdo: 8500,
+                        extraVouchers: 0,
+                        pendingExtra: null,
+                        icon: 'fa-bolt',
+                        logs: [
+                            { id: 203, date: '2026-09-05', driver: 'Pak Agus', odoBefore: 8500, odoAfter: 8660, vouchers: 2, energy: 20, station: 'SPKLU PLN Gambir', notes: 'Patroli Ring 1' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // App States
+        let currentUserRole = null;
+        let vehicles = [];
+        let activeVehicleId = null;
+        let consumptionChart = null;
+        let voucherPieChart = null;
+
+        window.onload = function() {
+            const savedRole = localStorage.getItem('fleet_active_role');
+            if (savedRole && USER_PROFILES[savedRole]) {
+                loginAs(savedRole);
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        };
+
+        function loginAs(role) {
+            currentUserRole = role;
+            localStorage.setItem('fleet_active_role', role);
+            document.getElementById('loginScreen').classList.add('hidden');
+
+            loadUserData();
+            applyThemeUI();
+            setDefaultDate();
+            renderDashboard();
+        }
+
+        function logout() {
+            currentUserRole = null;
+            localStorage.removeItem('fleet_active_role');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function loadUserData() {
+            const profile = USER_PROFILES[currentUserRole];
+            const stored = localStorage.getItem(profile.key);
+            if (stored) {
+                try {
+                    vehicles = JSON.parse(stored);
+                } catch(e) {
+                    vehicles = [...profile.defaultVehicles];
+                }
+            } else {
+                vehicles = JSON.parse(JSON.stringify(profile.defaultVehicles));
+                saveUserData();
+            }
+
+            if (vehicles.length > 0) {
+                activeVehicleId = vehicles[0].id;
+            }
+        }
+
+        function saveUserData() {
+            if (!currentUserRole) return;
+            const profile = USER_PROFILES[currentUserRole];
+            localStorage.setItem(profile.key, JSON.stringify(vehicles));
+        }
+
+        function applyThemeUI() {
+            const profile = USER_PROFILES[currentUserRole];
+            document.getElementById('userBadgeTitle').innerText = profile.title;
+            document.getElementById('userBadgeSub').innerText = profile.sub;
+            document.getElementById('inputDriver').value = profile.defaultDriver;
+        }
+
+        function selectVehicle(id) {
+            activeVehicleId = id;
+            renderDashboard();
+        }
+
+        function getActiveVehicle() {
+            return vehicles.find(v => v.id === activeVehicleId) || vehicles[0];
+        }
+
+        // Calculations for active vehicle
+        function calculateVehicleStats(vehicle) {
+            let totalVouchersUsed = 0;
+            let totalEnergyUsed = 0;
+            let processedLogs = [];
+
+            const totalAllocation = DEFAULT_MONTHLY_VOUCHER_ALLOCATION + (vehicle.extraVouchers || 0);
+
+            const sortedLogs = [...(vehicle.logs || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            sortedLogs.forEach((log) => {
+                const vouchers = Number(log.vouchers);
+                const energy = Number(log.energy);
+                const distance = log.odoAfter - log.odoBefore;
+                const efficiency = energy > 0 ? (distance / energy) : 0;
+
+                totalVouchersUsed += vouchers;
+                totalEnergyUsed += energy;
+
+                processedLogs.push({
+                    ...log,
+                    distance: distance > 0 ? distance : 0,
+                    efficiency: efficiency > 0 ? efficiency : 0
+                });
+            });
+
+            processedLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const remainingVouchers = Math.max(0, totalAllocation - totalVouchersUsed);
+            const remainingEnergy = remainingVouchers * (vehicle.unitRate || 10);
+
+            const latestLog = processedLogs.length > 0 ? processedLogs[0] : null;
+            const latestOdometer = latestLog ? latestLog.odoAfter : (vehicle.initialOdo || 0);
+            const totalDistance = processedLogs.reduce((acc, curr) => acc + curr.distance, 0);
+
+            const validEfficiencies = processedLogs.filter(p => p.efficiency > 0);
+            const avgEfficiency = validEfficiencies.length > 0 
+                ? validEfficiencies.reduce((acc, curr) => acc + curr.efficiency, 0) / validEfficiencies.length 
+                : (vehicle.type === 'EV' ? 6.5 : 10.5);
+
+            return {
+                totalAllocation,
+                totalVouchersUsed,
+                totalEnergyUsed,
+                remainingVouchers,
+                remainingEnergy,
+                latestOdometer,
+                totalDistance,
+                avgEfficiency,
+                processedLogs
+            };
+        }
+
+        function renderDashboard() {
+            renderVehicleCards();
+
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const stats = calculateVehicleStats(vehicle);
+
+            // Update Active Vehicle Banner Info
+            document.getElementById('activeVehicleTitle').innerText = `${vehicle.name} (${vehicle.plate})`;
+            document.getElementById('activeVehicleSubtitle').innerText = `Armada ${vehicle.type === 'EV' ? 'Listrik (EV)' : 'Bensin (ICE)'} • Kuota ${stats.totalAllocation} Voucher (${stats.totalAllocation * vehicle.unitRate} ${vehicle.unit}) per bulan`;
+            document.getElementById('printReportMeta').innerText = `Armada: ${vehicle.name} (${vehicle.plate}) • Periode LPJ Bulanan`;
+
+            const isEV = vehicle.type === 'EV';
+            const badgeEl = document.getElementById('vehicleTypeBadge');
+            badgeEl.className = `inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${isEV ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'}`;
+            badgeEl.innerHTML = `<i class="fa-solid ${isEV ? 'fa-bolt text-sky-400' : 'fa-gas-pump text-amber-400'}"></i> ${isEV ? 'ELECTRIC VEHICLE' : 'DIESEL / PETROL'}`;
+
+            // Voucher Progress
+            document.getElementById('vouchersRemainingDisplay').innerText = stats.remainingVouchers;
+            document.getElementById('totalAllocationDisplay').innerText = `/ ${stats.totalAllocation} Voucher`;
+            document.getElementById('energyRemainingDisplay').innerText = `(${stats.remainingEnergy} ${vehicle.unit})`;
+            document.getElementById('vouchersUsedDisplay').innerText = stats.totalVouchersUsed;
+
+            const percentageRemaining = Math.round((stats.remainingVouchers / stats.totalAllocation) * 100);
+            document.getElementById('voucherPercentBadge').innerText = `${percentageRemaining}% Sisa`;
+            document.getElementById('voucherProgressBar').style.width = `${percentageRemaining}%`;
+
+            // Handle Over-quota pending request UI
+            const extraBanner = document.getElementById('extraQuotaBanner');
+            if (vehicle.pendingExtra) {
+                extraBanner.classList.remove('hidden');
+                document.getElementById('extraQuotaBannerText').innerText = `Pengajuan +${vehicle.pendingExtra.amount} Voucher Ekstra untuk "${vehicle.pendingExtra.reason}" menunggu konfirmasi.`;
+            } else {
+                extraBanner.classList.add('hidden');
+            }
+
+            // Metrics
+            document.getElementById('cardOdometer').innerHTML = `${stats.latestOdometer.toLocaleString('id-ID')} <span class="text-xs font-normal text-slate-400">KM</span>`;
+            document.getElementById('cardDistanceTraveled').innerText = `Total Jarak: +${stats.totalDistance.toLocaleString('id-ID')} KM`;
+
+            document.getElementById('energyCardTitle').innerText = isEV ? 'Total Listrik' : 'Total Bensin';
+            document.getElementById('cardTotalEnergy').innerHTML = `${stats.totalEnergyUsed} <span class="text-xs font-normal text-slate-400">${vehicle.unit}</span>`;
+            document.getElementById('cardVoucherCount').innerText = `Setara ${stats.totalVouchersUsed} Voucher`;
+
+            const effUnit = isEV ? 'KM/kWh' : 'KM/L';
+            document.getElementById('cardAvgEfficiency').innerHTML = `${stats.avgEfficiency.toFixed(1)} <span class="text-xs font-normal text-slate-400">${effUnit}</span>`;
+            
+            const ratingEl = document.getElementById('cardEfficiencyRating');
+            if (isEV) {
+                ratingEl.className = 'text-[11px] text-sky-400 mt-1';
+                ratingEl.innerHTML = `<i class="fa-solid fa-bolt"></i> Efisiensi Baterai Ioniq 6`;
+            } else {
+                ratingEl.className = 'text-[11px] text-emerald-400 mt-1';
+                ratingEl.innerHTML = `<i class="fa-solid fa-leaf"></i> Konsumsi Fortuner`;
+            }
+
+            if (stats.processedLogs.length > 0) {
+                const latest = stats.processedLogs[0];
+                document.getElementById('cardLastDate').innerText = formatDate(latest.date);
+                document.getElementById('cardLastDriver').innerText = `${latest.driver} (${latest.station})`;
+            } else {
+                document.getElementById('cardLastDate').innerText = '-';
+                document.getElementById('cardLastDriver').innerText = '-';
+            }
+
+            document.getElementById('voucherUnitText').innerText = `1 Voucher = ${vehicle.unitRate} ${vehicle.unit}`;
+
+            renderVoucherGrid(stats.totalVouchersUsed, stats.totalAllocation, vehicle);
+            renderLogsTable(stats.processedLogs, vehicle);
+            renderCharts(stats, vehicle);
+        }
+
+        function renderVehicleCards() {
+            const container = document.getElementById('vehicleCardsGrid');
+            container.innerHTML = '';
+
+            vehicles.forEach(v => {
+                const isActive = v.id === activeVehicleId;
+                const isEV = v.type === 'EV';
+                const stats = calculateVehicleStats(v);
+
+                const card = document.createElement('div');
+                card.onclick = () => selectVehicle(v.id);
+                card.className = `glass-card p-4 rounded-2xl border transition duration-200 cursor-pointer relative overflow-hidden ${
+                    isActive ? 'vehicle-card-active' : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded font-mono ${isEV ? 'bg-sky-500/20 text-sky-400' : 'bg-amber-500/20 text-amber-400'}">
+                            <i class="fa-solid ${isEV ? 'fa-bolt' : 'fa-gas-pump'} mr-1"></i>${v.type}
+                        </span>
+                        <span class="text-xs font-mono text-slate-400">${v.plate}</span>
+                    </div>
+                    <h3 class="font-bold text-white text-base">${escapeHtml(v.name)}</h3>
+                    <div class="mt-3 flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] text-slate-400">Odometer Saat Ini</p>
+                            <p class="text-sm font-bold text-white font-mono">${stats.latestOdometer.toLocaleString('id-ID')} KM</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-400">Sisa Voucher</p>
+                            <p class="text-sm font-bold text-emerald-400 font-mono">${stats.remainingVouchers} / ${stats.totalAllocation}</p>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function renderVoucherGrid(usedCount, totalAllocation, vehicle) {
+            const container = document.getElementById('voucherGridContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= totalAllocation; i++) {
+                const isUsed = i <= usedCount;
+                const isExtra = i > DEFAULT_MONTHLY_VOUCHER_ALLOCATION;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border text-center transition duration-200 ${
+                    isUsed 
+                        ? 'bg-slate-900/40 border-slate-800 text-slate-600 opacity-50' 
+                        : isExtra 
+                            ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 hover:border-amber-400'
+                            : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-400 hover:bg-emerald-500/20'
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-[10px] uppercase font-bold tracking-wider mb-1">${isUsed ? 'TERPAKAI' : (isExtra ? 'EKSTRA' : 'READY')}</div>
+                    <i class="fa-solid ${isUsed ? 'fa-ticket-simple' : 'fa-ticket'} text-lg mb-1"></i>
+                    <div class="font-mono font-bold text-xs text-white">#${i < 10 ? '0' + i : i}</div>
+                    <div class="text-[10px] text-slate-400 font-mono">${vehicle.unitRate} ${vehicle.unit}</div>
+                `;
+
+                container.appendChild(card);
+            }
+        }
+
+        function renderLogsTable(logs, vehicle) {
+            const tbody = document.getElementById('logsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            const unitLabel = vehicle.type === 'EV' ? 'KM/kWh' : 'KM/L';
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition duration-150';
+
+                let effBadge = `<span class="text-slate-500 font-mono">-</span>`;
+                if (log.efficiency > 0) {
+                    effBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-semibold">${log.efficiency.toFixed(1)} ${unitLabel}</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 font-mono">${formatDate(log.date)}</td>
+                    <td class="py-3.5 px-4 font-semibold text-slate-200">${escapeHtml(log.driver || 'Driver')}</td>
+                    <td class="py-3.5 px-4 font-mono text-white">
+                        <span class="text-slate-400">${log.odoBefore.toLocaleString('id-ID')}</span> &rarr; <span class="font-bold">${log.odoAfter.toLocaleString('id-ID')} KM</span>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono text-sky-400">+${log.distance} KM</td>
+                    <td class="py-3.5 px-4 font-mono">
+                        <span class="text-white font-bold">${log.vouchers} Voucher</span> 
+                        <span class="text-slate-500">(${log.energy} ${vehicle.unit})</span>
+                    </td>
+                    <td class="py-3.5 px-4">${effBadge}</td>
+                    <td class="py-3.5 px-4">
+                        <div class="font-medium text-slate-200">${escapeHtml(log.station)}</div>
+                        <div class="text-[10px] text-slate-400">${escapeHtml(log.notes || '-')}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center no-print">
+                        <button onclick="deleteLog(${log.id})" class="text-slate-500 hover:text-rose-400 transition p-1.5 rounded-lg hover:bg-slate-800" title="Hapus Log">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCharts(stats, vehicle) {
+            document.getElementById('chartVehicleTag').innerText = `${vehicle.name} (${vehicle.plate})`;
+
+            const chronologicalLogs = [...stats.processedLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const labels = chronologicalLogs.map(l => formatDateShort(l.date));
+            const odoData = chronologicalLogs.map(l => l.odoAfter);
+            const energyData = chronologicalLogs.map(l => l.energy);
+
+            const isEV = vehicle.type === 'EV';
+            const themeColor = isEV ? '#38bdf8' : '#f59e0b';
+
+            // Chart 1
+            const ctx1 = document.getElementById('consumptionChart').getContext('2d');
+            if (consumptionChart) consumptionChart.destroy();
+
+            consumptionChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `Penggunaan (${vehicle.unit})`,
+                            data: energyData,
+                            backgroundColor: isEV ? 'rgba(56, 189, 248, 0.6)' : 'rgba(16, 185, 129, 0.6)',
+                            borderColor: isEV ? '#38bdf8' : '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            yAxisID: 'yEnergy',
+                        },
+                        {
+                            label: 'Odometer (KM)',
+                            data: odoData,
+                            type: 'line',
+                            borderColor: themeColor,
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: themeColor,
+                            yAxisID: 'yOdo',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 } }
+                        },
+                        yEnergy: {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: isEV ? '#38bdf8' : '#10b981', font: { family: 'Inter', size: 10 } },
+                            title: { display: true, text: vehicle.unit, color: isEV ? '#38bdf8' : '#10b981' }
+                        },
+                        yOdo: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: themeColor, font: { family: 'Inter', size: 10 } },
+                            title: { display: true, text: 'Odometer (KM)', color: themeColor }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2
+            const ctx2 = document.getElementById('voucherPieChart').getContext('2d');
+            if (voucherPieChart) voucherPieChart.destroy();
+
+            document.getElementById('pieUsedVal').innerText = `${stats.totalVouchersUsed} Voucher (${stats.totalEnergyUsed} ${vehicle.unit})`;
+            document.getElementById('pieAvailVal').innerText = `${stats.remainingVouchers} Voucher (${stats.remainingEnergy} ${vehicle.unit})`;
+
+            voucherPieChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Voucher Terpakai', 'Voucher Tersedia'],
+                    datasets: [{
+                        data: [stats.totalVouchersUsed, stats.remainingVouchers],
+                        backgroundColor: ['#10b981', themeColor],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Feature: Export CSV for LPJ
+        function exportLPJReport(format) {
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const stats = calculateVehicleStats(vehicle);
+            const profile = USER_PROFILES[currentUserRole];
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += `LAPORAN PERTANGGUNGJAWABAN (LPJ) KENDARAAN DINAS\n`;
+            csvContent += `Unit Deputi,${profile.title}\n`;
+            csvContent += `Nama Kendaraan,${vehicle.name} (${vehicle.plate})\n`;
+            csvContent += `Jenis Armada,${vehicle.type === 'EV' ? 'Electric Vehicle (EV)' : 'Bensin / Diesel'}\n`;
+            csvContent += `Total Voucher Terpakai,${stats.totalVouchersUsed} Voucher\n`;
+            csvContent += `Total Energi Terpakai,${stats.totalEnergyUsed} ${vehicle.unit}\n`;
+            csvContent += `Total Jarak Tempuh,${stats.totalDistance} KM\n\n`;
+
+            csvContent += `Tanggal,Nama Driver,Odo Awal (KM),Odo Akhir (KM),Jarak (KM),Voucher,Energi (${vehicle.unit}),Lokasi SPBU/SPKLU,Catatan\n`;
+
+            stats.processedLogs.forEach(l => {
+                csvContent += `"${l.date}","${l.driver}","${l.odoBefore}","${l.odoAfter}","${l.distance}","${l.vouchers}","${l.energy}","${l.station}","${l.notes || '-'}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `LPJ_Fleet_${vehicle.plate.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Form Helpers & Extra Voucher Management
+        function updateLiterCalculation() {
+            const vehicle = getActiveVehicle();
+            const voucherCount = parseInt(document.getElementById('inputVouchers').value) || 0;
+            const energy = voucherCount * (vehicle ? vehicle.unitRate : 10);
+            document.getElementById('inputEnergy').value = energy;
+        }
+
+        function calculateTripDistance() {
+            const before = parseInt(document.getElementById('inputOdoBefore').value) || 0;
+            const after = parseInt(document.getElementById('inputOdoAfter').value) || 0;
+            const diff = after - before;
+            
+            const previewEl = document.getElementById('calcDistancePreview');
+            if (diff > 0) {
+                previewEl.innerText = `+${diff} KM`;
+                previewEl.className = 'font-mono font-bold text-emerald-400 text-sm';
+            } else if (diff < 0) {
+                previewEl.innerText = 'Odometer Akhir harus > Odometer Awal';
+                previewEl.className = 'font-mono text-rose-400 text-xs';
+            } else {
+                previewEl.innerText = '0 KM';
+                previewEl.className = 'font-mono font-bold text-sky-400 text-sm';
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const date = document.getElementById('inputDate').value;
+            const driver = document.getElementById('inputDriver').value;
+            const odoBefore = parseInt(document.getElementById('inputOdoBefore').value);
+            const odoAfter = parseInt(document.getElementById('inputOdoAfter').value);
+            const vouchers = parseInt(document.getElementById('inputVouchers').value);
+            const energy = vouchers * vehicle.unitRate;
+            const station = document.getElementById('inputStation').value;
+            const notes = document.getElementById('inputNotes').value;
+
+            if (odoAfter <= odoBefore) {
+                alert('Odometer Saat Isi harus lebih besar daripada Odometer Sebelum Isi!');
+                return;
+            }
+
+            const newLog = {
+                id: Date.now(),
+                date,
+                driver,
+                odoBefore,
+                odoAfter,
+                vouchers,
+                energy,
+                station,
+                notes
+            };
+
+            if (!vehicle.logs) vehicle.logs = [];
+            vehicle.logs.push(newLog);
+
+            saveUserData();
+            renderDashboard();
+            closeLogModal();
+            document.getElementById('fuelForm').reset();
+            setDefaultDate();
+        }
+
+        function handleExtraQuotaSubmit(e) {
+            e.preventDefault();
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const amount = parseInt(document.getElementById('extraVoucherAmount').value);
+            const reason = document.getElementById('extraQuotaReason').value;
+
+            vehicle.pendingExtra = { amount, reason, date: new Date().toISOString() };
+
+            saveUserData();
+            renderDashboard();
+            closeExtraVoucherModal();
+            alert(`Pengajuan +${amount} voucher ekstra telah terkirim untuk persetujuan Deputi.`);
+        }
+
+        function approveExtraQuota() {
+            const vehicle = getActiveVehicle();
+            if (!vehicle || !vehicle.pendingExtra) return;
+
+            vehicle.extraVouchers = (vehicle.extraVouchers || 0) + vehicle.pendingExtra.amount;
+            vehicle.pendingExtra = null;
+
+            saveUserData();
+            renderDashboard();
+            alert('Pengajuan voucher ekstra berhasil disetujui!');
+        }
+
+        function handleVehicleSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('newVehName').value;
+            const plate = document.getElementById('newVehPlate').value;
+            const type = document.getElementById('newVehType').value;
+            const initialOdo = parseInt(document.getElementById('newVehInitialOdo').value) || 0;
+
+            const isEV = type === 'EV';
+            const newVeh = {
+                id: 'v_custom_' + Date.now(),
+                name,
+                plate,
+                type,
+                unit: isEV ? 'kWh' : 'Liter',
+                unitRate: 10,
+                initialOdo,
+                extraVouchers: 0,
+                pendingExtra: null,
+                icon: isEV ? 'fa-bolt' : 'fa-car-side',
+                logs: []
+            };
+
+            vehicles.push(newVeh);
+            activeVehicleId = newVeh.id;
+
+            saveUserData();
+            renderDashboard();
+            closeVehicleModal();
+            document.getElementById('vehicleForm').reset();
+        }
+
+        function deleteLog(id) {
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            if (confirm('Apakah Anda yakin ingin menghapus catatan pengisian ini?')) {
+                vehicle.logs = vehicle.logs.filter(log => log.id !== id);
+                saveUserData();
+                renderDashboard();
+            }
+        }
+
+        function resetMonthlyQuota() {
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            if (confirm(`Reset kuota akan mengembalikan jatah ke 20 voucher awal untuk ${vehicle.name}. Lanjutkan?`)) {
+                vehicle.logs = [];
+                vehicle.extraVouchers = 0;
+                vehicle.pendingExtra = null;
+                saveUserData();
+                renderDashboard();
+            }
+        }
+
+        function filterLogs() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const stats = calculateVehicleStats(vehicle);
+            const filtered = stats.processedLogs.filter(log => 
+                (log.driver && log.driver.toLowerCase().includes(query)) ||
+                log.station.toLowerCase().includes(query) || 
+                (log.notes && log.notes.toLowerCase().includes(query)) ||
+                log.date.includes(query)
+            );
+            renderLogsTable(filtered, vehicle);
+        }
+
+        function openLogModal() {
+            const vehicle = getActiveVehicle();
+            if (!vehicle) return;
+
+            const stats = calculateVehicleStats(vehicle);
+            document.getElementById('inputOdoBefore').value = stats.latestOdometer;
+
+            const isEV = vehicle.type === 'EV';
+            document.getElementById('energyLabel').innerText = isEV ? 'Total Listrik (kWh)' : 'Total Bensin (Liter)';
+            document.getElementById('energyUnitSpan').innerText = vehicle.unit;
+            document.getElementById('stationLabel').innerText = isEV ? 'Lokasi SPKLU / Fast Charging' : 'Nama SPBU';
+            document.getElementById('modalSubTitle').innerText = `${vehicle.name} (${vehicle.plate})`;
+
+            updateLiterCalculation();
+            document.getElementById('logModal').classList.remove('hidden');
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').classList.add('hidden');
+        }
+
+        function openExtraVoucherModal() {
+            document.getElementById('extraVoucherModal').classList.remove('hidden');
+        }
+
+        function closeExtraVoucherModal() {
+            document.getElementById('extraVoucherModal').classList.add('hidden');
+        }
+
+        function openVehicleModal() {
+            document.getElementById('vehicleModal').classList.remove('hidden');
+        }
+
+        function closeVehicleModal() {
+            document.getElementById('vehicleModal').classList.add('hidden');
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputDate').value = today;
+        }
+
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function formatDateShort(dateString) {
+            const options = { day: 'numeric', month: 'short' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function escapeHtml(str) {
+            return str ? str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            }) : '';
+        }
+    </script>
+</body>
+</html>
